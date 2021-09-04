@@ -38,8 +38,8 @@ import warnings
 from datetime import datetime
 from typing import List, Set, Union
 
-import discord
-from discord.ext.commands import Context
+import disnake as discord
+from disnake.ext.commands import Context
 
 from .decorators import ensure_not_primed
 from .errors import *

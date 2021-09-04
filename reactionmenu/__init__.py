@@ -1,8 +1,8 @@
 """
-reactionmenu • discord pagination
+reactionmenu • disnake pagination
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A library to create a discord paginator. Supports pagination with Discords Buttons feature and reactions.
+A library to create a disnake paginator. Supports pagination with Disnakes Buttons feature and reactions.
 
 :copyright: (c) 2021-present Defxult#8269
 :license: MIT

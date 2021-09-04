@@ -28,8 +28,8 @@ import random
 import re
 from typing import List, Union
 
-import discord
-from discord.ext.commands import Context
+import disnake as discord
+from disnake.ext.commands import Context
 
 from . import ViewButton
 from .abc import _DEFAULT_STYLE, BaseMenu, _PageController

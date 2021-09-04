@@ -28,8 +28,8 @@ import itertools
 from threading import Timer
 from typing import List, Union
 
-import discord
-from discord.ext.commands import Context
+import disnake as discord
+from disnake.ext.commands import Context
 
 from .abc import BaseMenu, _PageController
 from .buttons import ReactionButton

@@ -32,8 +32,8 @@ if TYPE_CHECKING:
 import re
 from collections import namedtuple
 
-import discord
-from discord.ext.commands import Command
+import disnake as discord
+from disnake.ext.commands import Command
 
 from .abc import BaseButton, PaginationEmojis
 from .errors import IncorrectType
