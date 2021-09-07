@@ -26,7 +26,7 @@ import asyncio
 import inspect
 import itertools
 from threading import Timer
-from typing import List, Union
+from typing import ClassVar, List, Optional, Union
 
 import disnake as discord
 from disnake.ext.commands import Context
@@ -97,8 +97,8 @@ class ReactionMenu(BaseMenu):
 		The discord codeblock language identifier (:attr:`ReactionMenu.TypeEmbedDynamic` only/defaults to :class:`None`). Example: `ReactionMenu(ctx, ..., wrap_in_codeblock='py')`
 	"""
 
-	NORMAL = 'NORMAL'
-	FAST = 'FAST'
+	NORMAL: ClassVar[str] = 'NORMAL'
+	FAST: ClassVar[str] = 'FAST'
 
 	def __init__(self, ctx: Context, *, menu_type: int, **kwargs):
 		super().__init__(ctx, menu_type, **kwargs)
@@ -238,17 +238,17 @@ class ReactionMenu(BaseMenu):
 			The button name, emoji, or type
 
 		search_by: :class:`str`
-			(optional) How to search for the button. If "name", it's searched by button names. If "emoji", it's searched by it's emojis. 
-			If "type", it's searched by :attr:`ReactionMenu.Type`, aka the `linked_to` of the button (defaults to "name")
-
-		Raises
-		------
-		- `ReactionMenuException`: Parameter :param:`search_by` was not "name", "emoji", or "type"
+			How to search for the button. If "name", it's searched by button names. If "emoji", it's searched by it's emojis. 
+			If "type", it's searched by :attr:`ReactionMenu.Type`, aka the `linked_to` of the button
 
 		Returns
 		-------
 		Union[:class:`ReactionButton`, List[:class:`ReactionButton`]]:
 			The button(s) matching the given identity. Can be :class:`None` if the button was not found
+		
+		Raises
+		------
+		- `ReactionMenuException`: Parameter :param:`search_by` was not "name", "emoji", or "type"
 		"""
 		search_by = str(search_by).lower()
 		if search_by in ('name', 'emoji'):
@@ -537,8 +537,8 @@ class ReactionMenu(BaseMenu):
 			"""|coro| Handle reaction removal for :attr:`navigation_speed`. Update the buttons statistics. Contact the relay if one was set and handle any events if set"""
 			btn._update_statistics(user)
 			await determine_removal(emoji, user)
-			await self._handle_event(btn)
-			await self._contact_relay(user, btn)
+			await self._handle_event(button)
+			await self._contact_relay(user, button)
 
 		# apply the reactions (buttons) to the menu message
 		for btn in self._buttons:
@@ -641,7 +641,20 @@ class ReactionMenu(BaseMenu):
 						await self._msg.edit(embed=btn.custom_embed)
 
 	async def stop(self, *, delete_menu_message=False, clear_reactions=False):
-		"""|coro| Stops the process of the menu with the option of deleting the menu's message or clearing reactions upon stop"""
+		"""|coro| Stops the process of the menu with the option of deleting the menu's message or clearing reactions upon stop
+		
+		Parameters
+		----------
+		delete_menu_message: :class:`bool`
+			Delete the menu message
+		
+		clear_reactions: :class:`bool`
+			Remove all reactions
+		
+		Raises
+		------
+		- `discord.DiscordException`: Any exception that can be raised when deleting a message or removing a reaction from a message
+		"""
 		if self._is_running:
 			try:
 				if delete_menu_message:
@@ -681,36 +694,18 @@ class ReactionMenu(BaseMenu):
 				self._auto_paginator = False
 		
 	@ensure_not_primed
-	async def start(self, *, send_to: Union[str, int, discord.TextChannel]=None, reply: bool=False):
+	async def start(self, *, send_to: Optional[Union[str, int, discord.TextChannel]]=None, reply: bool=False):
 		"""|coro| Start the menu
 
 		Parameters
 		----------
-		send_to: Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]
-			(optional) The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
+		send_to: Optional[Union[:class:`str`, :class:`int`, :class:`discord.TextChannel`]]
+			The channel you'd like the menu to start in. Use the channel name, ID, or it's object. Please note that if you intend to use a text channel object, using
 			method :meth:`discord.Client.get_channel()` (or any other related methods), that text channel should be in the same list as if you were to use `ctx.guild.text_channels`. This only works on a context guild text channel basis. That means a menu instance cannot be
-			created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to` (defaults to :class:`None`)
+			created in one guild and the menu itself (:param:`send_to`) be sent to another. Whichever guild context the menu was instantiated in, the text channels of that guild are the only options for :param:`send_to`
 
 		reply: :class:`bool`
-			(optional) Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True` (defaults to `False`)
-
-		Example for :param:`send_to`
-		---------------------------
-		Using the `send_to` parameter is optional. Simply calling `menu.start()` will suffice if you want the menu sent to the channel where the command was used/message was sent
-
-		```
-		menu = ReactionMenu(...)
-
-		# channel name
-		await menu.start(send_to='bot-commands')
-
-		# channel ID
-		await menu.start(send_to=1234567890123456)
-
-		# channel object
-		channel = guild.get_channel(1234567890123456)
-		await menu.start(send_to=channel)
-		```
+			Enables the menu message to reply to the message that triggered it. Parameter :param:`send_to` must be :class:`None` if this is `True`
 
 		Raises
 		------
