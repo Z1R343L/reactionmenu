@@ -76,10 +76,9 @@ class _PageController:
         """Return the total amount of pages registered to the menu"""
         return len(self.pages) - 1
     
-    def next(self) -> Union[discord.Embed, str]:
-        """Return the next page in the pagination process"""
+    def validate_index(self) -> Union[discord.Embed, str]:
+        """If the index is out of bounds, assign the appropriate values so the pagination process can continue and return the associated page"""
         try:
-            self.index += 1
             _ = self.pages[self.index]
         except IndexError:
             if self.index > self.total_pages:
@@ -89,20 +88,16 @@ class _PageController:
                 self.index = self.total_pages
         finally:
             return self.pages[self.index]
+
+    def next(self) -> Union[discord.Embed, str]:
+        """Return the next page in the pagination process"""
+        self.index += 1
+        return self.validate_index()
     
     def prev(self) -> Union[discord.Embed, str]:
         """Return the previous page in the pagination process"""
-        try:
-            self.index -= 1
-            _ = self.pages[self.index]
-        except IndexError:
-            if self.index > self.total_pages:
-                self.index = 0
-            
-            elif self.index < 0:
-                self.index = self.total_pages
-        finally:
-            return self.pages[self.index]
+        self.index -= 1
+        return self.validate_index()
     
     def first_page(self) -> Union[discord.Embed, str]:
         """Return the first page in the pagination process"""
@@ -243,7 +238,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         self.all_can_click: bool = kwargs.get('all_can_click', False)
         self.delete_interactions: bool = kwargs.get('delete_interactions', True)
 
-        # NOTE - I might have to remove this because d.py 2.0 for whatever reason doesn't have a `allowed_mentions` kwarg for :meth:`inter.response.edit_message()`
+        #+ NOTE - I might have to remove this because d.py 2.0 for whatever reason doesn't have a `allowed_mentions` kwarg for :meth:`inter.response.edit_message()`
         self.allowed_mentions: discord.AllowedMentions = kwargs.get('allowed_mentions', discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True))
     
     @abc.abstractmethod
@@ -458,10 +453,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         :class:`int`: The amount of pages that have been added to the menu. If the `menu_type` is :attr:`TypeEmbedDynamic`, the amount of pages is not known until after the menu has started and will return a value of 0
         """
         if self._menu_type == BaseMenu.TypeEmbedDynamic:
-            if self._is_running:
-                return len(self._pages)
-            else:
-                return 0
+            return len(self._pages) if self._is_running else 0
         else:
             return len(self._pages)
     
@@ -753,7 +745,6 @@ class BaseMenu(metaclass=abc.ABCMeta):
     
     def _handle_send_to(self, send_to) -> discord.abc.Messageable:
         """For the :param:`send_to` kwarg in :meth:`Menu.start()`. Determine what channel the menu should start in"""
-        
         if self.in_dms:
             return self._ctx
         else:
@@ -966,7 +957,7 @@ class BaseMenu(metaclass=abc.ABCMeta):
         Parameters
         ----------
         func: Callable[[:class:`NamedTuple`], :class:`None`]
-            The function should only contain a single positional argument. Discord.py command functions (`@bot.command()`) not supported
+            The function should only contain a single positional argument. Command functions (`@bot.command()`) not supported
         
         only: Optional[List[Union[:class:`ReactionButton`, :class:`ViewButton`]]]
             A list of buttons associated with the current menu instance. If this is :class:`None`, all buttons on the menu will be relayed. If
